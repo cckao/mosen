@@ -2,6 +2,7 @@
 
 import argparse
 import cv2
+import captures
 import errno
 import FrameQueue
 import os
@@ -34,19 +35,30 @@ def saveMid(frames, imPath):
 if '__main__' == __name__:
     ap = argparse.ArgumentParser()
     ap.add_argument('--vid', help='path to the video file')
-    ap.add_argument('--step', type=int, default=3,
-                    help='number of frames used to detect')
-    ap.add_argument('--diffthr', type=int, default=30,
-                    help='threshold for diff images')
-    ap.add_argument('--cr', type=float, default=0.00001,
-                    help='positive if persentage of pixels changed exceeds it')
+    ap.add_argument('--imdir', help='path to the image directory')
+    ap.add_argument('--step', type=int, default=3, help='''
+                    number of consecutive frames used to detect differences
+                    ''')
+    ap.add_argument('--diffthr', type=int, default=30, help='''
+                    label a pixel changed if the absolute difference exceeds
+                    this threshold
+                    ''')
+    ap.add_argument('--cr', type=float, default=0.00001, help='''
+                    motion detected if the ratio of changed pixels in the
+                    frame exceeds this threshold
+                    ''')
     ap.add_argument('--out', default='out', help='output directory')
     ap.add_argument('--cid', type=int, default=0, help='camera id')
     args = ap.parse_args()
 
+    # use video stream first
     cap = cv2.VideoCapture(args.vid)
     if not cap.isOpened():
         cap.open(args.cid)
+
+    # use image sequence
+    if not cap.isOpened():
+        cap = captures.FileCapture(args.imdir)
 
     try:
         os.makedirs(args.out)

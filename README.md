@@ -1,9 +1,11 @@
 # mosen
 Motion detection algorithms
 
-## Absolute Difference
+## diffdet.py
 Detect motion by absolute differences of frames. Suitable for a stationary camera.
 
-`./diffdet.py --vid <path/to/vid> --step <step> --out <path/to/output>`
+It finds the input source in the following order: video file (--vid), camera (--cid), image sequence (--imdir).
+
+`./diffdet.py --vid <path/to/vid> --diffthr <threshold> --cr <ratio_of_changed_pixels> --out <path/to/output>`
 
 `./diffdet.py -h` for more information.
