@@ -49,6 +49,9 @@ if '__main__' == __name__:
                     ''')
     ap.add_argument('--out', default='out', help='output directory')
     ap.add_argument('--cid', type=int, default=0, help='camera id')
+    ap.add_argument('--keepFileName', action='store_true', help='''
+                    if the source is image squence, using originmal file name.
+                    ''')
     args = ap.parse_args()
 
     # use video stream first
@@ -66,8 +69,31 @@ if '__main__' == __name__:
         if e.errno != errno.EEXIST:
             raise
 
-    i = 0
-    for fs in FrameQueue.FrameQueue(args.step, cap):
-        if changeRate(absDiff(fs, args.diffthr)) > args.cr:
-            saveMid(fs, imPath(args.out, i))
-            i = i + 1
+    if isinstance(cap, captures.FileCapture) and args.keepFileName:
+        # this section should be refectored
+        if args.step < 2:
+            raise
+
+        from collections import deque
+        names = deque(maxlen=args.step)
+        fs = deque(maxlen=args.step)
+
+        while len(fs) <= fs.maxlen:
+            if len(cap._imgs) > 0:
+                name = cap._imgs[0]
+
+            r1, r2 = cap.read()
+            if not r1:
+                break
+            names.append(name)
+            fs.append(r2)
+
+            if len(fs) == fs.maxlen:
+                if changeRate(absDiff(list(fs), args.diffthr)) > args.cr:
+                    saveMid(fs, os.path.join(args.out, names[len(fs) / 2]))
+    else:
+        i = 0
+        for fs in FrameQueue.FrameQueue(args.step, cap):
+            if changeRate(absDiff(fs, args.diffthr)) > args.cr:
+                saveMid(fs, imPath(args.out, i))
+                i = i + 1
